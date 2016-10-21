@@ -51,7 +51,6 @@ from paasta_tools.utils import get_paasta_branch
 from paasta_tools.utils import get_service_instance_list
 from paasta_tools.utils import get_user_agent
 from paasta_tools.utils import InvalidInstanceConfig
-from paasta_tools.utils import InvalidJobNameError
 from paasta_tools.utils import load_deployments_json
 from paasta_tools.utils import load_system_paasta_config
 from paasta_tools.utils import NoConfigurationForServiceError
@@ -537,30 +536,6 @@ class MarathonServiceConfig(LongRunningServiceConfig):
 
     def get_healthcheck_max_consecutive_failures(self):
         return self.config_dict.get('healthcheck_max_consecutive_failures', 30)
-
-    # FIXME(jlynch|2016-08-02, PAASTA-4964): DEPRECATE nerve_ns and remove it
-    def get_nerve_namespace(self):
-        return decompose_job_id(self.get_registrations()[0])[1]
-
-    def get_registrations(self):
-        registrations = self.config_dict.get('registrations', [])
-        for registration in registrations:
-            try:
-                decompose_job_id(registration)
-            except InvalidJobNameError:
-                log.error(
-                    'Provided registration {0} for service '
-                    '{1} is invalid'.format(registration, self.service)
-                )
-
-        # Backwards compatbility with nerve_ns
-        # FIXME(jlynch|2016-08-02, PAASTA-4964): DEPRECATE nerve_ns and remove it
-        if not registrations and 'nerve_ns' in self.config_dict:
-            registrations.append(
-                compose_job_id(self.service, self.config_dict['nerve_ns'])
-            )
-
-        return registrations or [compose_job_id(self.service, self.instance)]
 
     def get_bounce_health_params(self, service_namespace_config):
         default = {}
